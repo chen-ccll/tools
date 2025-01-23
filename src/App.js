@@ -62,6 +62,37 @@ export default function App() {
     };
     reader.readAsArrayBuffer(file);
   };
+  const handleFileRead3 = async (files) => {
+    for (let i = 0; i < files.length; i++) {
+      await handleSrtFile2(files[i]);
+    }
+  };
+  const handleSrtFile2 = async (file) => {
+    const reader = new FileReader();
+    let filename = file.name?.split(".")[0];
+    reader.onload = async (event) => {
+      try {
+        let data = new Uint8Array(event.target.result);
+        const workbook = XLSX.read(data, { type: "array" });
+        const worksheet = workbook.Sheets[workbook.SheetNames[0]];
+        let list = XLSX.utils.sheet_to_json(worksheet, {
+          header: ["time", "cnText", "enText"],
+        });
+        list.splice(0, 1);
+        let str = "";
+        list.forEach((row, index) => {
+          let enText = row.enText ? `${row.enText}` : "";
+          str = str + `${index + 1}\n${row.time || ""}\n${enText}\n\n`;
+        });
+        // console.log(str);
+        const blob = new Blob([str], { type: "text/plain" });
+        saveAs(blob, `${filename}.srt`);
+      } catch (error) {
+        alert("格式可能有误，转换失败");
+      }
+    };
+    reader.readAsArrayBuffer(file);
+  };
   return (
     <div className="App">
       <div>
@@ -87,7 +118,16 @@ export default function App() {
           multipleFiles={true}
         >
           <button style={{ marginTop: 20 }} className="btn">
-            点击上传.xlsx文件
+            点击上传.xlsx文件（生成的.srt文件包含{`<b></b>`}）
+          </button>
+        </ReactFileReader>
+        <ReactFileReader
+          handleFiles={handleFileRead3}
+          fileTypes=".xlsx"
+          multipleFiles={true}
+        >
+          <button style={{ marginTop: 20 }} className="btn">
+            点击上传.xlsx文件（生成的.srt文件不包含{`<b></b>`}）
           </button>
         </ReactFileReader>
         {/* <div style={{ marginTop: 20 }}>
